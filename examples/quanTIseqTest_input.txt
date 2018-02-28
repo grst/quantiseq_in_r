@@ -1,0 +1,2 @@
+Sample1	Sample1_1.fq	Sample1_2.fq
+Sample2	Sample2.fq	None
