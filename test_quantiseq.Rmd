@@ -1,18 +1,39 @@
 ---
-title: "R Notebook"
+title: "Test quanTIseq deconvolution"
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+```{r setup}
+source("./quanTIseq_decon.R")
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
-
-```{r}
-plot(cars)
+library(tidyverse)
+library(assertthat)
+library(magrittr)
+library(pheatmap)
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+# Using the example file provided by quanTIseq
+```{r}
+expr_mat = read_tsv("examples/quanTIseqTest_gene_tpm.txt") %>% column_to_rownames("GENE")
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+res = quantiseq_decon(expr_mat)
+```
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+Assure the result is as expected
+
+```{r}
+res_expected = read_tsv("./examples/quanTIseqTest_cell_fractions.txt") 
+
+res2 = res %>% as_tibble() %>% select(-Sample) %>% as.matrix()
+res_expected2 = res_expected %>% column_to_rownames("Sample") %>% as.matrix()
+
+assert_that(all.equal(res2, res_expected2))
+```
+
+# Using some other data (cell-type specific gene expression from fantom5)
+```{r}
+f5_mat = read_tsv("examples/f5_samples.tsv") %>% column_to_rownames("gene_symbol")
+f5_res = quantiseq_decon(f5_mat) 
+f5_res %<>% as_tibble() %>% select(-Sample) %>% as.matrix()
+pheatmap(f5_res, cluster_rows = FALSE, cluster_cols = FALSE)
+```
